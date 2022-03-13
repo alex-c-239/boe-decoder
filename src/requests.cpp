@@ -34,7 +34,7 @@ unsigned char * add_request_header(unsigned char * start, unsigned length, const
     start = encode(start, static_cast<uint16_t>(length));
     start = encode(start, encode_request_type(type));
     *start++ = 0;
-    return encode(start, static_cast<uint32_t>(seq_no));
+    return encode(start, seq_no);
 }
 
 char convert_side(const Side side)
@@ -109,27 +109,33 @@ std::array<unsigned char, calculate_size(RequestType::New)> create_new_order_req
     return msg;
 }
 
-ExecutionDetails decode_order_execution(const std::vector<unsigned char> & /*message*/)
+ExecutionDetails decode_order_execution(const std::vector<unsigned char> & message)
 {
     ExecutionDetails exec_details;
-    // fill exec_details fields
-    //   exec_details.cl_ord_id.assign(char_ptr, length);
-    // or
-    //   exec_details.cl_ord_id = std::string{char_ptr, length};
-    // ...
-    //   exec_details.filled_volume = x;
-    // ...
+    size_t current_pos;
+#define FIELD(name, _, __, ___) exec_details.name = decode_order_execution_field_##name(message, current_pos);
+#define VAR_FIELD(name, _, __) exec_details.name = decode_order_execution_field_##name(message, current_pos);
+#include "order_execution_fields.inl"
     return exec_details;
 }
 
-RestatementDetails decode_order_restatement(const std::vector<unsigned char> & /*message*/)
+RestatementDetails decode_order_restatement(const std::vector<unsigned char> & message)
 {
     RestatementDetails restatement_details;
-    // ...
+    size_t current_pos;
+#define FIELD(name, _, __, ___) restatement_details.name = decode_order_restatement_field_##name(message, current_pos);
+#define VAR_FIELD(name, _, __) restatement_details.name = decode_order_restatement_field_##name(message, current_pos);
+#include "order_restatement_fields.inl"
     return restatement_details;
 }
 
-std::vector<unsigned char> request_optional_fields_for_message(const ResponseType)
+std::vector<unsigned char> request_optional_fields_for_message(const ResponseType type)
 {
+    switch (type) {
+    case ResponseType::OrderExecution:
+        return order_execution_optional_fields();
+    case ResponseType::OrderRestatement:
+        return order_restatement_optional_fields();
+    }
     return {};
 }

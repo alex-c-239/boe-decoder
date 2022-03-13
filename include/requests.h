@@ -105,7 +105,8 @@ std::vector<unsigned char> request_optional_fields_for_message(ResponseType);
 enum class LiquidityIndicator
 {
     Added,
-    Removed
+    Removed,
+    Unknown
 };
 
 struct ExecutionDetails
@@ -122,6 +123,22 @@ struct ExecutionDetails
 };
 
 ExecutionDetails decode_order_execution(const std::vector<unsigned char> & message);
+
+constexpr size_t order_execution_bitfield_num()
+{
+    return std::max({0
+#define VAR_FIELD(_, n, __) , n
+#include "order_execution_opt_fields.inl"
+    });
+}
+
+inline std::vector<unsigned char> order_execution_optional_fields()
+{
+    std::vector<unsigned char> result(order_execution_bitfield_num(), 0x00);
+#define VAR_FIELD(_, position, n) result[position - 1] += n;
+#include "order_execution_opt_fields.inl"
+    return result;
+}
 
 /*
  * Order Restatement
@@ -145,3 +162,22 @@ struct RestatementDetails
 };
 
 RestatementDetails decode_order_restatement(const std::vector<unsigned char> & message);
+
+constexpr size_t order_restatement_bitfield_num()
+{
+    return std::max({0
+#define FIELD(_, n, __) , n
+#include "order_restatement_opt_fields.inl"
+    });
+}
+
+inline std::vector<unsigned char> order_restatement_optional_fields()
+{
+    std::vector<unsigned char> result(order_restatement_bitfield_num(), 0x00);
+#define FIELD(_, position, n) result[position - 1] += n;
+#include "order_restatement_opt_fields.inl"
+    return result;
+}
+
+#include "order_execution_fields.h"
+#include "order_restatement_fields.h"

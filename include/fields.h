@@ -40,8 +40,41 @@ inline unsigned char * encode_price(unsigned char * start, const double value)
     return encode(start, static_cast<int64_t>(value * order + std::copysign(epsilon, value)));
 }
 
+inline uint8_t decode_binary1(const std::vector<unsigned char> & bytes, size_t & start)
+{
+    return decode_binary(bytes, start, 1);
+}
+
+inline uint16_t decode_binary2(const std::vector<unsigned char> & bytes, size_t & start)
+{
+    return decode_binary(bytes, start, 2);
+}
+
+inline uint32_t decode_binary4(const std::vector<unsigned char> & bytes, size_t & start)
+{
+    return decode_binary(bytes, start, 4);
+}
+
+inline uint64_t decode_binary8(const std::vector<unsigned char> & bytes, size_t & start)
+{
+    return decode_binary(bytes, start, 8);
+}
+
+inline std::string decode_base36(const std::vector<unsigned char> & bytes, size_t & start)
+{
+    return convert_to_base(decode_binary8(bytes, start), 36);
+}
+
+inline double decode_price(const std::vector<unsigned char> & bytes, size_t & n)
+{
+    return to_signed(decode_binary8(bytes, n)) * (1e-4);
+}
+
 inline constexpr size_t char_size = 1;
+inline constexpr size_t binary1_size = 1;
+inline constexpr size_t binary2_size = 2;
 inline constexpr size_t binary4_size = 4;
+inline constexpr size_t binary8_size = 8;
 inline constexpr size_t price_size = 8;
 
 #define FIELD(name, protocol_type, ctype)                                                \
